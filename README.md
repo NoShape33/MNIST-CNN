@@ -1,92 +1,92 @@
-# MNIST手写数字识别 — 基于卷积神经网络（CNN）
+# MNIST 手写数字识别 — 基于卷积神经网络
 
-《人工智能》课程论文项目：使用 PyTorch 实现 CNN 对 MNIST 手写数字数据集进行分类。
+这是大三下学期《人工智能》课程的结课论文项目。课程涵盖了线性回归、对数几率模型、多层感知机、反向传播、CNN（VGG / GoogLeNet / ResNet）等内容，结课要求在三个方向中任选其一完成论文。我选择的是**方向一：复现任意人工智能算法**，用 CNN 来做 MNIST 手写数字识别。
+
+虽然 MNIST 已经是深度学习的 "Hello World"，但亲手从零搭模型、调参、看 loss 曲线一点点下降、最后在测试集上跑到 99.5% 准确率，整个过程还是很有成就感的。算是对这学期所学知识的一次完整实践。
+
+项目代码用 PyTorch 实现，包含一个基础 CNN 和一个 Mini-ResNet 作为对照实验，所有训练日志、图表均可在本地完整复现。
 
 ## 项目结构
 
 ```
 ├── src/
-│   ├── model.py          # CNN模型定义（BasicCNN + MiniResNet）
-│   ├── train.py          # 训练主脚本（含三组对照实验）
+│   ├── model.py          # CNN 模型定义（BasicCNN + MiniResNet）
+│   ├── train.py          # 训练主脚本（三组对照实验）
 │   ├── data_loader.py    # 数据加载与预处理
-│   ├── evaluate.py       # 评估与可视化
-│   └── utils.py          # 辅助函数
-├── figures/              # 论文用图（训练后生成）
-├── outputs/              # 模型权重与训练日志（训练后生成）
-├── requirements.txt      # Python依赖
+│   ├── evaluate.py       # 评估与可视化图表生成
+│   ├── utils.py          # 辅助函数（计时、绘图等）
+│   └── test_omml.py      # OMML 公式验证脚本
+├── figures/              # 所有论文用图（运行 evaluate.py 后生成）
+├── outputs/              # 训练日志 JSON 文件
+├── paper/                # 课程论文 Word 文档
+├── requirements.txt      # Python 依赖清单
+├── .gitignore
 └── README.md
 ```
 
 ## 环境要求
 
-- Python 3.8+
-- PyTorch 2.0+ (CUDA 可选但推荐)
-- 详见 `requirements.txt`
+- Python 3.10+
+- PyTorch 2.0+（CUDA 可选，CPU 也能跑）
 
-## 安装
+## 安装与运行
 
 ```bash
+# 1. 克隆仓库
+git clone https://github.com/NoShape33/-.git
+cd -
+
+# 2. 安装依赖
 pip install -r requirements.txt
-```
 
-## 运行
-
-### 训练
-
-```bash
+# 3. 训练模型（三组对照实验，约 10-15 分钟）
 python src/train.py
-```
 
-将依次执行三组对照实验：
-1. BasicCNN + Adam 优化器
-2. BasicCNN + SGD 优化器
-3. MiniResNet + Adam 优化器
-
-模型权重与训练日志保存至 `outputs/` 目录。
-
-### 评估与可视化
-
-```bash
+# 4. 生成评估图表
 python src/evaluate.py
 ```
 
-生成以下论文用图至 `figures/` 目录：
-- 数据集样本展示
-- 训练/验证 Loss 与 Accuracy 曲线
-- 测试集混淆矩阵
-- 正确/错误分类样本可视化
-- 卷积核与特征图可视化
-- 模型对照实验对比图
+训练完成后：
+- 模型权重与训练日志保存在 `outputs/` 目录
+- 所有论文用图（loss 曲线、混淆矩阵、特征图等）生成到 `figures/` 目录
 
-## 模型架构
-
-### BasicCNN
-```
-Conv2d(1,32,3) → BN → ReLU → MaxPool(2)
-Conv2d(32,64,3) → BN → ReLU → MaxPool(2)
-Conv2d(64,128,3) → BN → ReLU → MaxPool(2)
-FC(1152,256) → ReLU → Dropout(0.5)
-FC(256,10) → LogSoftmax
-```
-
-### MiniResNet (对照实验)
-```
-Conv2d(1,32,3) → BN → ReLU
-ResidualBlock(32→32) ×2
-ResidualBlock(32→64, stride=2) ×2
-GlobalAvgPool → FC(64,10) → LogSoftmax
-```
+MNIST 数据集会在首次运行时自动下载到 `data/` 目录。
 
 ## 实验设置
 
 | 参数 | 值 |
 |------|-----|
-| Epochs | 20 (早停 patience=5) |
+| Epochs | 20（早停 patience=5） |
 | Batch Size | 64 |
 | 优化器 | Adam (lr=0.001) / SGD (lr=0.01, momentum=0.9) |
 | 学习率调度 | ReduceLROnPlateau (factor=0.5, patience=3) |
 | 数据增强 | 随机旋转 ±10° |
 
-## 数据集
+## 对照实验
 
-[MNIST](http://yann.lecun.com/exdb/mnist/) — 手写数字灰度图像，28×28像素，10类（0-9），训练集60,000张，测试集10,000张。代码运行后自动下载至 `data/` 目录。
+| 实验组 | 模型 | 优化器 | 测试准确率 |
+|--------|------|--------|-----------|
+| 1 | BasicCNN | Adam | 99.47% |
+| 2 | BasicCNN | SGD | 99.44% |
+| 3 | MiniResNet | Adam | 99.52% |
+
+## 模型架构
+
+### BasicCNN
+
+```
+Conv2d(1, 32, 3) → BN → ReLU → MaxPool(2)
+Conv2d(32, 64, 3) → BN → ReLU → MaxPool(2)
+Conv2d(64, 128, 3) → BN → ReLU → MaxPool(2)
+FC(1152, 256) → ReLU → Dropout(0.5)
+FC(256, 10) → LogSoftmax
+```
+
+### MiniResNet（对照实验）
+
+```
+Conv2d(1, 32, 3) → BN → ReLU
+ResidualBlock(32→32) ×2
+ResidualBlock(32→64, stride=2) ×2
+GlobalAvgPool → FC(64, 10) → LogSoftmax
+```
